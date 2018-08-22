@@ -12,6 +12,19 @@
 2、在IP获取器里面启动主程序
 3、在验证码获取器里面启动主程序，然后可以人工识别验证码
 
+
+# 获取IP
+通过扫描全部主机的IP+端口
+主机的个数为20亿，2的32次幂，端口的个数为65536，一共是2的48次幂
+这个数字非常大，全部扫描一遍几乎是不可能的。
+
+有些代理网站提供了一些代理。有的收费，有的免费。
+
+要想自己动手，丰衣足食，就需要自己搭建ADSL拨号上网，那样就会拥有源源不断地稳定的IP供应。
+
+
+
+一些爬虫代理
 https://github.com/awolfly9/IPProxyTool
 https://github.com/h01/ProxyScanner
 https://github.com/Python3WebSpider/ProxyPool
