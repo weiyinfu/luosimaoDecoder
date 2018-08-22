@@ -2,6 +2,7 @@
 
 <head>
     <meta charset="utf8">
+    <script src="https://cdn.bootcss.com/axios/0.18.0/axios.min.js"></script>
 </head>
 
 <!--注意此处：body的大小必须设置足够大，否则selenium截图的时候只截取body大小的部分，就会漏掉那些悬浮元素-->
@@ -34,6 +35,13 @@
             document.getElementById("result").innerHTML = resp
             document.body.removeChild(document.querySelector(".l-captcha"))
             document.body.removeChild(document.querySelector("#captchaScript"))
+            axios.get("http://localhost:8000/code/", {
+                params: {
+                    code: resp
+                }
+            }).catch(function (err) {
+                console.log("发送请求失败，服务启动没？")
+            })
         }
         newNode(divAttrs)
         newNode(scriptAttrs)

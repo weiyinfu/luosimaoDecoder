@@ -1,0 +1,128 @@
+# 一、螺丝帽验证码
+螺丝帽验证码主要的JS：http://captcha.luosimao.com/static/dist/captcha.js?v=201805071004
+```html
+<div id="capcha" class="l-captcha" data-site-key="b4dcddfceb9f58698d3051e403e7e3a5" data-callback="getResponse"></div>
+<script src="http://captcha.luosimao.com/static/dist/captcha.js?v=201805071004"></script>
+```
+
+使用如上两行代码即可调用螺丝帽验证码。关键在于div的class=l-captch，这样螺丝帽的script就会对这个div做出相应的更改。
+需要注意，螺丝帽的每个使用方都有一个key，当请求螺丝帽官网时，需要带着这个key。
+
+前端使用了验证码，后端也需要做出相应的更改。这就需要了解整个验证流程。
+1、页面加载完毕，页面中螺丝帽验证码相关的div和script，这是螺丝帽script会在div里面填充一个frame。
+2、用户点击开始验证按钮，页面请求螺丝帽官网，获取一个加密了的图片，前端解密之后得到图片的URL展示给用户。这个图片URL只能访问一次。因为访问一次之后这个URL立马就失效了。获取到的图片不是一张图片而是一个打乱了的像拼图一样的图片，这就要求再用一层解密算法把图片排序。最终得到一个给人看的图片。
+当螺丝帽下发验证码时，相当于它产生一个问题和一个答案。它会把问题返给用户，同时把答案存储在缓存里面。建立起IP：答案的映射对。
+3、当用户通过点击“星星”、“方块”、“圆形”后，把用户操作信息（包括位置、时间等）提交给螺丝帽官网。如果验证通过了，螺丝帽返回一个验证码code。螺丝帽那边的原理就是根据IP找到答案，计算答案跟用户操作的相似度，如果比较符合，则通过验证。如果没有通过验证，什么也不返回；如果通过了验证，返回给用户一个随机生成的code，同时把这个code存储在缓存里面。
+4、验证码一般都随着表单一起提交。所以螺丝帽服务器返回的code需要作为表单中的一项提交到用户自己的后台服务器。用户的后台服务器收到表单之后，把code和key（对应前端中的key）发往螺丝帽，仿佛在问：“螺丝帽，你那里有没有这个code”。如果螺丝帽说：“有啊”。那么螺丝帽就会把这个code从缓存中移除掉（每个验证码只能够使用一次）。服务器收到螺丝帽的回复之后，如果螺丝帽说”有“，则表示验证通过，处理此次请求；如果螺丝帽说：”没有“，说明这个code是没有的，后台服务器就会拒绝处理此次请求。
+
+通过以上讲解，可以发现以下特点：
+* 验证码的验证过程都是在前端进行的，只需要把code传给后端
+* code是用户无关的，我生成的code可以给别人让别人使用，这样别人就不需要进行验证，直接提交带code的表单就可以了。这一特点非常有利于破解螺丝帽验证码。因为我们只需要把code注射到螺丝帽服务器的缓存池里面。这样就把破解验证码的过程和提交表单的过程分离了。
+
+[这是一篇螺丝帽验证码用法教程](https://blog.csdn.net/T_james/article/details/79869370)
+
+# 二、分析页面，简化逻辑
+螺丝帽要求验证码所在的页面的域名必须是合法的，不能是IP端口号的形式。这个要求非常容易满足，只需要使用Charles（Mac系统下）或者Fiddler（Windows系统下）把某个域名的URL映射到本地文件即可。
+
+要想简化逻辑，就需要删繁就简，去掉多余部分。
+在Chrome里面，网页内容是可以随意编辑的，但是编辑之后有些脚本可能会不生效。所以这种方式不如使用Fiddler映射的方法好用。
+
+使用URL映射的方式是一种非常重要的方法，它让我们借助浏览器进行可视化操作、前端可以随意定制。
+
+```html
+<html>
+
+<head>
+    <meta charset="utf8">
+</head>
+
+<body>
+    <div id="result"></div>
+    <script>
+        var divAttrs = {
+            "class": "l-captcha",
+            "data-site-key": "b4dcddfceb9f58698d3051e403e7e3a5",
+            "data-callback": 'haha',
+            "elementType": "div"
+        }
+        var scriptAttrs = {
+            "src": "http://captcha.luosimao.com/static/dist/captcha.js?v=201805071004",
+            "id": "captchaScript",
+            "elementType": "script"
+        }
+        function newNode(attrs) {
+            var el = document.createElement(attrs.elementType)
+            for (var i in attrs) {
+                el.setAttribute(i, attrs[i])
+            }
+            document.body.insertBefore(el, document.body.childNodes[0])
+        }
+        function haha(resp) {
+            if (resp) {
+                console.log(resp)
+                var el = document.createElement("div")
+                el.innerHTML = resp
+                el.style="margin-bottom:10px;word-break:break-all;"
+                document.getElementById("result").appendChild(el)
+                document.body.removeChild(document.querySelector(".l-captcha"))
+                document.body.removeChild(document.querySelector("#captchaScript"))
+            }
+            newNode(divAttrs)
+            newNode(scriptAttrs)
+            for (var i = 0;i < document.body.childNodes.length;i++) {
+                var el = document.body.childNodes[i]
+                if (el.id && el.id.startsWith("l-captcha-float")) {
+                    document.body.removeChild(el)
+                }
+            }
+            setTimeout(() => {
+                document.querySelector(".captcha-widget-status").click()
+            }, 2000);
+
+        }
+        haha()
+    </script>
+
+</body>
+
+</html>
+
+```
+
+# 三、破解框架
+验证码通常会通过IP地址作为唯一性校验。所以IP代理池是必需的。
+螺丝帽验证码也需要一堆code。
+有了IP池和code池，我们只需要使用python requests模块模拟提交表单就可以实现随意提交验证码了。
+
+那么如何构造code池呢？
+如果通过人工，可以利用可视化操作，每当产生一个code就把这个code通过ajax请求提交给后端。后端利用这个code从IP池中随意选取一个IP进行提交表单。这种方法本质上就是通过人工破解验证码。只不过把人工过程更清晰地独立出来了。
+
+如果使用高级方法，必然要用到正宗的验证码破解：图像识别。破解螺丝帽的那个JavaScript存在的主要难点在于那个文件进行了混淆，可读性几乎为零，并且即便破解了这份JavaScript代码，要想理解并用Python语言重新实现一边也是很复杂的。所以我们需要绕过这个JavaScript代码，也就是要把这块代码当做黑盒子。这就表明我们必须依赖浏览器。这时可以使用selenium这个浏览器控制神器。
+
+使用selenium进行屏幕截图，然后把截得的图像数据传给图像识别Python代码。问题转化为简单的Python图像识别问题。图像识别模型根据“星形”、“方形”、“圆形”确定需要点击的位置，得到相对于图片的坐标。这时再调用selenium模拟浏览器中的点击操作。最终破解了验证码。破解之后得到的code只存在前端里面，需要再次发起ajax请求，把这个code发到后端。
+
+```python
+import requests
+
+sess = requests.session()
+url = "http://vote.zazhipu.com/Client/WoDoVote"
+code = """
+L6ln9xo3jIWPnE-4edCZoLjnb8dxguv3iC6oxOB6AI9vo10gQl9zP5vMBVrqq9BnMynVTzAJFULPThlvO5jwTBRh54-wm2HsUd08ODZVN7rfUBs8Euc23TjojMbCsjZDazQ7BjdxEv7xlpC1KAxgQ1cZnkLTNDxQ7_O51NFtlxWRJzJYlQUtsoo512U2CS7wr-1m49_rq4Z9-nJeNMXSW3vp4NEmAVp5grNoDK0i0JvtGv58XzIt5tIU9zPEBDo7N1h5loyRWgMai370hnwsKLQklMY4Q53Gim19MBeFcd-AzWvRI-wNYA
+""".strip()
+data = {
+    "Name": "weiyinfu12",
+    "QQ": "1234234343",
+    "Email": r"12342434@qq.com",
+    "Code": code,
+    "Id": "7b655518-2301-4801-bd3a-b47fe5bbb603"
+}
+proxies = {
+    "http": "http://175.170.240.92:80"
+}
+resp = sess.post(url, data, proxies=None)
+print(resp.text)
+
+```
+
+#四、思考
+有些事情浏览器不让做，但是计算机是肯定可以做的。比如改包、跨域请求，浏览器不支持但是其它工具是支持的。但是为什么不支持更改IP呢？因为IP更加底层。如果IP都可以伪造，那就真是没有什么东西不能伪造了。网络世界将充满伪装。既然为了安全，为什么网络中信息传递大量使用纯文本的方式而非加密后的二进制方式？
