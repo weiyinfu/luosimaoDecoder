@@ -7,8 +7,7 @@ tem_strs = "星形 圆点 方块".split()
 tem_str_body = []
 tem_shape_body = []
 
-io.imshow(tem)
-io.show()
+print(tem.shape)
 
 
 def load_characters():
@@ -18,7 +17,12 @@ def load_characters():
         j = 0
         while j < tem.shape[1]:
             if tuple(tem[i][j]) != (255, 255, 255):
-                tem_str_body.append(tem[i:min(i + 30, tem.shape[0])][j:])
+                print(tem[i][j], i, j)
+                tem_str_body.append(tem[i:][j:])
+
+                # print(i, j)
+                # io.imshow(tem[0:min(i + 30, tem.shape[0])][0:j])
+                # io.show()
                 i = min(i + 30, tem.shape[0]) - 1
                 j += 30
             else:
@@ -52,6 +56,12 @@ def better_shape(shape):
 
 
 load_characters()
+print(tem.shape)
+tem[30:367][62:65] = (255, 0, 0)
+tem[:][10:30][10:30] = (255, 0, 0)
+io.imshow(tem)
+io.show()
+exit(0)
 load_images()
 tem_str_body = list(map(better_character, tem_str_body))
 tem_shape_body = list(map(better_shape, tem_shape_body))

@@ -1,0 +1,54 @@
+<html>
+
+<head>
+    <meta charset="utf8">
+</head>
+
+<!--注意此处：body的大小必须设置足够大，否则selenium截图的时候只截取body大小的部分，就会漏掉那些悬浮元素-->
+<body style="width:100%;height:100%;margin:0">
+<div id="result" style="margin-bottom:10px;word-break:break-all;"></div>
+<script>
+    var divAttrs = {
+        "class": "l-captcha",
+        "data-site-key": "b4dcddfceb9f58698d3051e403e7e3a5",
+        "data-callback": 'haha',
+        "elementType": "div"
+    }
+    var scriptAttrs = {
+        "src": "http://captcha.luosimao.com/static/dist/captcha.js?v=201805071004",
+        "id": "captchaScript",
+        "elementType": "script"
+    }
+
+    function newNode(attrs) {
+        var el = document.createElement(attrs.elementType)
+        for (var i in attrs) {
+            el.setAttribute(i, attrs[i])
+        }
+        document.body.insertBefore(el, document.body.childNodes[0])
+    }
+
+    function haha(resp) {
+        if (resp) {
+            console.log(resp)
+            document.getElementById("result").innerHTML = resp
+            document.body.removeChild(document.querySelector(".l-captcha"))
+            document.body.removeChild(document.querySelector("#captchaScript"))
+        }
+        newNode(divAttrs)
+        newNode(scriptAttrs)
+        for (var i = 0; i < document.body.childNodes.length; i++) {
+            var el = document.body.childNodes[i]
+            if (el.id && el.id.startsWith("l-captcha-float")) {
+                document.body.removeChild(el)
+            }
+        }
+    }
+
+    haha()
+
+</script>
+
+</body>
+
+</html>
