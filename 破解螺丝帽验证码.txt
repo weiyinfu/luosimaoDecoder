@@ -106,14 +106,14 @@ import requests
 
 sess = requests.session()
 url = "http://vote.zazhipu.com/Client/WoDoVote"
-code = """
+create_code = """
 L6ln9xo3jIWPnE-4edCZoLjnb8dxguv3iC6oxOB6AI9vo10gQl9zP5vMBVrqq9BnMynVTzAJFULPThlvO5jwTBRh54-wm2HsUd08ODZVN7rfUBs8Euc23TjojMbCsjZDazQ7BjdxEv7xlpC1KAxgQ1cZnkLTNDxQ7_O51NFtlxWRJzJYlQUtsoo512U2CS7wr-1m49_rq4Z9-nJeNMXSW3vp4NEmAVp5grNoDK0i0JvtGv58XzIt5tIU9zPEBDo7N1h5loyRWgMai370hnwsKLQklMY4Q53Gim19MBeFcd-AzWvRI-wNYA
 """.strip()
 data = {
     "Name": "weiyinfu12",
     "QQ": "1234234343",
     "Email": r"12342434@qq.com",
-    "Code": code,
+    "Code": create_code,
     "Id": "7b655518-2301-4801-bd3a-b47fe5bbb603"
 }
 proxies = {

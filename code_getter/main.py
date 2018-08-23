@@ -57,7 +57,7 @@ def get_code():
     # print(src)
     html = pq(src)
     code = html("#result").text()
-    print("code", code)
+    print("create_code", code)
     if code:
         print(code)
         submit(code, None)
